@@ -262,19 +262,10 @@ def generate_polygon_plot(clipping_window, original_polygon, clipped_polygon):
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
-        input_method = request.form.get('input_method')
-        if input_method == 'file':
-            file = request.files.get('file')
-            if not file:
-                return "No file uploaded", 400
-            data = file.read().decode('utf-8').splitlines()
-        elif input_method == 'manual':
-            text_input = request.form.get('text_input')
-            if not text_input:
-                return "No input data provided", 400
-            data = text_input.splitlines()
-        else:
-            return "Invalid input method", 400
+        file = request.files.get('file')
+        if not file:
+            return "No file uploaded", 400
+        data = file.read().decode('utf-8').splitlines()
 
         try:
             segments, clipping_window, polygon = parse_input_data(data)
@@ -319,35 +310,26 @@ def index():
 
     return '''
     <form method="post" enctype="multipart/form-data">
-        <input type="radio" name="input_method" value="file" checked> Input via file
-        <input type="radio" name="input_method" value="manual"> Input manually
-        <br>
-        <div id="file-input">
-            <input type="file" name="file">
-        </div>
-        <div id="manual-input" style="display:none;">
-            <textarea name="text_input" rows="15" cols="50">
--- Sample Input Format --
-Number of segments
-x1 y1 x2 y2
-...
-Clipping window Xmin Ymin Xmax Ymax
-P x1 y1 x2 y2 x3 y3 ...
-</textarea>
-        </div>
+        <input type="file" name="file">
+        <p>Please select a .txt file for the input.</p>
+        <p>If file input is selected, please upload a file with the following format:</p>
+        <ul>
+            <li>First line: number of segments.</li>
+            <li>Next lines: coordinates of segments in the format <code>x1 y1 x2 y2</code>.</li>
+            <li>Line with the letter <code>P</code>: start of polygon coordinates.</li>
+            <li>Next lines: coordinates of the polygon in the format <code>x1 y1 x2 y2 x3 y3 ...</code>.</li>
+        </ul>
+        <p>Example file:</p>
+        <pre>
+3
+0 0 5 5
+5 0 0 5
+2 2 7 7
+1 1 6 6
+P 0 2 3 6 7 7 6 -1
+        </pre>
         <input type="submit" value="Submit">
     </form>
-    <script>
-        document.querySelector('input[type=radio][name=input_method]').addEventListener('change', function() {
-            if (this.value === 'file') {
-                document.getElementById('file-input').style.display = 'block';
-                document.getElementById('manual-input').style.display = 'none';
-            } else if (this.value === 'manual') {
-                document.getElementById('file-input').style.display = 'none';
-                document.getElementById('manual-input').style.display = 'block';
-            }
-        });
-    </script>
     '''
 
 if __name__ == '__main__':
